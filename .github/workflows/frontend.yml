@@ -19,18 +19,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: "Cache Dependencies"
-        uses: "actions/cache@v4" # Utiliza la acción de caché en su versión 4 como utilidad
-        id: cache-front-node-modules # identificador del step para acceder a su output
-        with:
-          path: "./front-end-app/node_modules" # Ruta del directorio que queremos cachear
-          key: front-node-modules-${{ hashFiles('**/package-lock.json') }} # Clave para identificar el caché
-
       - name: Install dependencies
-        # Sólo ejecuta el paso si no se ha encontrado el caché. Accede al output del step anterior con su id para comprobar si se ha encontrado el caché
-        if: steps.cache-front-node-modules.outputs.cache-hit != 'true'
         run: npm ci
-
       - name: Build
         run: npm run build
