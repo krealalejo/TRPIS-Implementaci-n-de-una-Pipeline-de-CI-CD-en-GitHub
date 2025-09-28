@@ -12,11 +12,14 @@ jobs:
       run:
         working-directory: ./front-end-app
     runs-on: ubuntu-latest
+    permissions: # Añadimos permisos para que la acción pueda leer y escribir en el registry de Github
+      packages: write
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Necesario para que se descargue todo el historial de git y enviarlo a SonarCloud. Por defecto es 1, que sólo descarga el último commit.
+          fetch-depth: 0
       - name: Manage NPM Dependencies
         uses: ./.github/actions/cache-node-dependencies
         with:
@@ -27,15 +30,28 @@ jobs:
         run: npm run build
 
       - name: Lint
-        run: npm run ci:lint # Ejecuta el comando npm run ci:lint de nuestro repositorio. Asegurarnos que tengamos un script en el package.json que ejecute el linter que estemos usando, en este caso ESlint
+        run: npm run ci:lint
 
       - name: Test
-        run: npm run ci:test # Ejecuta el comando npm run ci:test de nuestro repositorio. Asegurarnos que tengamos un script en el package.json que ejecute el runner de testing que estemos usando
+        run: npm run ci:test
 
       - name: SonarCloud
         uses: sonarsource/sonarcloud-github-action@master
-        with: # Muy importante esta parte, ya que le dice a SonarCloud que sólo analice el proyecto de front
+        with:
           projectBaseDir: front-end-app
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} #missing
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_FRONT }} #missing
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_FRONT }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3 # Utilizamos la acción de login de Docker del marketplace
+        with:
+          registry: ghcr.io # añadimos Github como registry de docker
+          username: ${{ github.actor }} # El usuario de Github
+          password: ${{ secrets.GITHUB_TOKEN }} # El token de Github que ya viene por defecto en los secrets
+      - name: Build Docker Image
+        uses: docker/build-push-action@v5 # Utilizamos la acción de build y push de docker del marketplace. Esto hace el docker build y el docker push por debajo
+        with:
+          context: ./front-end-app # El working directory
+          push: true
+          tags: ghcr.io/${{ github.actor }}/ci-cd-example-front:latest # Añadimos el tag de la imagen apuntando al registry de Github
