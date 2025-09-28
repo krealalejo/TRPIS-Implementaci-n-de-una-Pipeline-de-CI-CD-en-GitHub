@@ -1,16 +1,20 @@
-name: Frontend
+name: Backend CI/CD
 
 on:
   push:
     branches: [main]
+    paths:
+      - 'back-end-app/**'
   pull_request:
     branches: [main]
+    paths:
+      - 'back-end-app/**'
 
 jobs:
   build:
     defaults:
       run:
-        working-directory: ./front-end-app
+        working-directory: ./back-end-app
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
