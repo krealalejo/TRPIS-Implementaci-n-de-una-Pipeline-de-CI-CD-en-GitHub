@@ -1,0 +1,29 @@
+name: "Get & Cache NPM Dependencies"
+description: "Get & Cache Dependencies(via npm) for faster builds"
+# Podemos definir los parámetros de entrada que queramos, en este caso el nombre de la app y el directorio para el monorepo
+inputs:
+  app-name:
+    description: "The app name"
+    required: false
+    default: "app"
+  working-directory:
+    description: "The working directory"
+    required: false
+    default: "."
+runs:
+  using: "composite"
+  steps:
+    - name: "Cache Dependencies"
+      uses: actions/cache@v4
+      id: cache-node-modules
+      with:
+        # En un monorepo muy importante que el path sea único para cada app y que el hash sea único para cada package-lock.json
+        path: "${{ inputs.working-directory }}/node_modules"
+        key: deps-${{inputs.app-name}}-inputs-node-modules-${{ hashFiles(format('{0}/package-lock.json', inputs.working-directory)) }}
+
+    - name: Install Dependencies
+      if: steps.cache-node-modules.outputs.cache-hit != 'true'
+      # Cambiamos al directorio de trabajo y ejecutamos npm ci
+      run: cd ${{ inputs.working-directory }} && npm ci
+      # El tipo de shell que vamos a utilizar es obligatorio en composite actions
+      shell: bash

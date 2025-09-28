@@ -1,14 +1,10 @@
-name: Backend CI/CD
+name: Backend
 
 on:
   push:
     branches: [main]
-    paths:
-      - 'back-end-app/**'
   pull_request:
     branches: [main]
-    paths:
-      - 'back-end-app/**'
 
 jobs:
   build:
@@ -19,7 +15,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Install dependencies
-        run: npm ci
+      - name: Manage NPM Dependencies
+        uses: ./.github/actions/cache-node-dependencies
+        with:
+          # Pasamos otros valores, en este caso para el backend
+          app-name: "nest-app"
+          working-directory: "./back-end-app"
       - name: Build
         run: npm run build
